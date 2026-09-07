@@ -2,7 +2,7 @@ name: Build KOReader nightly
 
 on:
   schedule:
-    - cron: "17 4 * * *" # daily, after the KOReader build server has published the night's build
+    - cron: "30 7 * * *" # daily, after the koreader/nightly-builds GitLab schedule (~06:20 UTC) has finished
   workflow_dispatch:
     inputs:
       force:
@@ -10,7 +10,11 @@ on:
         type: boolean
         default: false
       nightly:
-        description: "Build a specific nightly directory name (e.g. v2026.07.2-50-g7b0938bd8_2026-09-06) instead of the newest"
+        description: "Pin a nightly-server directory name (e.g. v2026.07.2-50-g7b0938bd8_2026-09-06) instead of the newest"
+        type: string
+        default: ""
+      pipeline:
+        description: "Pin a koreader/nightly-builds GitLab pipeline id instead of the newest"
         type: string
         default: ""
 
@@ -32,26 +36,22 @@ jobs:
 
       - name: Check for a new nightly
         id: check
+        env:
+          NIGHTLY: ${{ github.event.inputs.nightly }}
+          PIPELINE: ${{ github.event.inputs.pipeline }}
         run: |
-          if [ -n "${{ github.event.inputs.nightly }}" ]; then
-            ./scripts/check-nightly.sh /dev/null >/dev/null 2>&1 || true
-            NIGHTLY="${{ github.event.inputs.nightly }}"
-            base="${NIGHTLY#v}"; base="${base%%-*}"
-            count="${NIGHTLY#*-}"; count="${count%%-*}"
-            date="${NIGHTLY##*_}"; date="${date//-/}"
-            echo "latest=$NIGHTLY" >> "$GITHUB_OUTPUT"
-            echo "pkgver=${base}_git${date}_p${count}" >> "$GITHUB_OUTPUT"
-            echo "update=true" >> "$GITHUB_OUTPUT"
-          else
-            ./scripts/check-nightly.sh | tee -a "$GITHUB_OUTPUT"
-          fi
+          ./scripts/check-nightly.sh | tee -a "$GITHUB_OUTPUT"
           if [ "${{ github.event.inputs.force }}" = "true" ]; then
             echo "update=true" >> "$GITHUB_OUTPUT"
           fi
 
       - name: Update VELBUILD and checksums
         if: steps.check.outputs.update == 'true'
-        run: ./scripts/bump-velbuild.sh "${{ steps.check.outputs.latest }}"
+        run: >-
+          ./scripts/bump-velbuild.sh
+          "${{ steps.check.outputs.latest }}"
+          "${{ steps.check.outputs.aarch64_url }}"
+          "${{ steps.check.outputs.armv7_url }}"
 
       - name: Upload VELBUILD
         if: steps.check.outputs.update == 'true'

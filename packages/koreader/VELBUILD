@@ -1,8 +1,11 @@
 maintainer="Noa Himesaka <himesaka@noa.codes>"
 pkgname=koreader
-# _nightly is the KOReader nightly directory name, e.g. v2026.07.2-50-g7b0938bd8_2026-09-06
-# Both _nightly and pkgver are rewritten by scripts/bump-velbuild.sh; do not edit by hand.
+# _nightly is the KOReader nightly name, e.g. v2026.07.2-50-g7b0938bd8_2026-09-06, and the
+# two URLs are where its reMarkable zips live (nightly server or GitLab CI artifacts).
+# All three plus pkgver are rewritten by scripts/bump-velbuild.sh; do not edit by hand.
 _nightly=
+_aarch64_url=""
+_armv7_url=""
 pkgver=0
 pkgrel=0
 upstream_author="koreader"
@@ -19,8 +22,8 @@ readmeurl="https://raw.githubusercontent.com/$upstream_author/koreader/$_basetag
 changelogurl="https://github.com/$upstream_author/koreader/compare/$_basetag...$_commit"
 
 source="
-https://build.koreader.rocks/download/nightly/$_nightly/koreader-remarkable-aarch64-$_nightly.zip
-https://build.koreader.rocks/download/nightly/$_nightly/koreader-remarkable-$_nightly.zip
+koreader-remarkable-aarch64-$_nightly.zip::$_aarch64_url
+koreader-remarkable-$_nightly.zip::$_armv7_url
 COPYING-$_basetag::https://raw.githubusercontent.com/$upstream_author/koreader/$_basetag/COPYING
 KOReader.oxide
 "
