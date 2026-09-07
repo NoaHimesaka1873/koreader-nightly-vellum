@@ -36,6 +36,12 @@ unpack() {
 	esac
 }
 
+# vbuild runs "abuild check" as an explicit step, which ignores !check in
+# options; an empty check() keeps abuild from warning about missing tests.
+check() {
+	:
+}
+
 package() {
 	install -d "$pkgdir"/home/root/xovi/exthome/appload
 	install -d "$pkgdir"/home/root/.local/share/applications
