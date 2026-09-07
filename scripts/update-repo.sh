@@ -44,7 +44,7 @@ for arch in aarch64 armv7; do
         sh -c "
             cp /keys/koreader-nightly.rsa.pub /etc/apk/keys/
             rm -f APKINDEX.tar.gz
-            apk index --rewrite-arch $arch -o APKINDEX.tar.gz *.apk
+            apk index --no-warnings --rewrite-arch $arch -o APKINDEX.tar.gz *.apk
             abuild-sign -k /keys/koreader-nightly.rsa APKINDEX.tar.gz
             apk verify *.apk
             chown $(id -u):$(id -g) APKINDEX.tar.gz

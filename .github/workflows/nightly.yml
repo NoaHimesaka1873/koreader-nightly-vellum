@@ -30,7 +30,7 @@ jobs:
       nightly: ${{ steps.check.outputs.latest }}
       pkgver: ${{ steps.check.outputs.pkgver }}
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/install-vbuild
 
@@ -55,7 +55,7 @@ jobs:
 
       - name: Upload VELBUILD
         if: steps.check.outputs.update == 'true'
-        uses: actions/upload-artifact@v6
+        uses: actions/upload-artifact@v7
         with:
           name: velbuild
           path: packages/koreader/VELBUILD
@@ -70,11 +70,11 @@ jobs:
       matrix:
         arch: [aarch64, armv7]
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
       - uses: ./.github/actions/install-vbuild
 
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v8
         with:
           name: velbuild
           path: packages/koreader
@@ -101,7 +101,7 @@ jobs:
               done
             "
 
-      - uses: actions/upload-artifact@v6
+      - uses: actions/upload-artifact@v7
         with:
           name: koreader-${{ matrix.arch }}
           path: dist/${{ matrix.arch }}/*.apk
@@ -114,14 +114,14 @@ jobs:
       contents: write
       id-token: write
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
 
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v8
         with:
           name: velbuild
           path: packages/koreader
 
-      - uses: actions/download-artifact@v6
+      - uses: actions/download-artifact@v8
         with:
           pattern: koreader-*
           path: dist
