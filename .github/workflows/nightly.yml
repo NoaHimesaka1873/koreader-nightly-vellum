@@ -1,0 +1,173 @@
+name: Build KOReader nightly
+
+on:
+  schedule:
+    - cron: "17 4 * * *" # daily, after the KOReader build server has published the night's build
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Rebuild and republish even if the nightly has not changed"
+        type: boolean
+        default: false
+      nightly:
+        description: "Build a specific nightly directory name (e.g. v2026.07.2-50-g7b0938bd8_2026-09-06) instead of the newest"
+        type: string
+        default: ""
+
+concurrency:
+  group: nightly
+  cancel-in-progress: false
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+    outputs:
+      update: ${{ steps.check.outputs.update }}
+      nightly: ${{ steps.check.outputs.latest }}
+      pkgver: ${{ steps.check.outputs.pkgver }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/install-vbuild
+
+      - name: Check for a new nightly
+        id: check
+        run: |
+          if [ -n "${{ github.event.inputs.nightly }}" ]; then
+            ./scripts/check-nightly.sh /dev/null >/dev/null 2>&1 || true
+            NIGHTLY="${{ github.event.inputs.nightly }}"
+            base="${NIGHTLY#v}"; base="${base%%-*}"
+            count="${NIGHTLY#*-}"; count="${count%%-*}"
+            date="${NIGHTLY##*_}"; date="${date//-/}"
+            echo "latest=$NIGHTLY" >> "$GITHUB_OUTPUT"
+            echo "pkgver=${base}_git${date}_p${count}" >> "$GITHUB_OUTPUT"
+            echo "update=true" >> "$GITHUB_OUTPUT"
+          else
+            ./scripts/check-nightly.sh | tee -a "$GITHUB_OUTPUT"
+          fi
+          if [ "${{ github.event.inputs.force }}" = "true" ]; then
+            echo "update=true" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Update VELBUILD and checksums
+        if: steps.check.outputs.update == 'true'
+        run: ./scripts/bump-velbuild.sh "${{ steps.check.outputs.latest }}"
+
+      - name: Upload VELBUILD
+        if: steps.check.outputs.update == 'true'
+        uses: actions/upload-artifact@v6
+        with:
+          name: velbuild
+          path: packages/koreader/VELBUILD
+          if-no-files-found: error
+
+  build:
+    needs: check
+    if: needs.check.outputs.update == 'true'
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        arch: [aarch64, armv7]
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: ./.github/actions/install-vbuild
+
+      - uses: actions/download-artifact@v6
+        with:
+          name: velbuild
+          path: packages/koreader
+
+      - name: Set up signing key
+        run: |
+          echo "${{ secrets.SIGNING_KEY }}" > keys/koreader-nightly.rsa
+          chmod 600 keys/koreader-nightly.rsa
+
+      - name: Build koreader ${{ needs.check.outputs.pkgver }} for ${{ matrix.arch }}
+        run: ./scripts/build-package.sh "${{ matrix.arch }}"
+
+      - name: Verify package signatures
+        run: |
+          docker run --rm \
+            -v "$PWD/dist:/dist:ro" \
+            -v "$PWD/keys:/keys:ro" \
+            ghcr.io/eeems/vbuild-builder:main \
+            sh -c "
+              cp /keys/koreader-nightly.rsa.pub /etc/apk/keys/
+              for apk in /dist/*/*.apk; do
+                [ -f \"\$apk\" ] || continue
+                apk verify \"\$apk\" || exit 1
+              done
+            "
+
+      - uses: actions/upload-artifact@v6
+        with:
+          name: koreader-${{ matrix.arch }}
+          path: dist/${{ matrix.arch }}/*.apk
+          if-no-files-found: error
+
+  publish:
+    needs: [check, build]
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/download-artifact@v6
+        with:
+          name: velbuild
+          path: packages/koreader
+
+      - uses: actions/download-artifact@v6
+        with:
+          pattern: koreader-*
+          path: dist
+      - name: Arrange artifacts
+        run: |
+          for arch in aarch64 armv7; do
+            mkdir -p dist/$arch
+            mv dist/koreader-$arch/*.apk dist/$arch/
+            rmdir dist/koreader-$arch
+          done
+          ls -la dist/*/
+
+      - name: Set up signing key
+        run: |
+          echo "${{ secrets.SIGNING_KEY }}" > keys/koreader-nightly.rsa
+          chmod 600 keys/koreader-nightly.rsa
+
+      - name: Tailscale
+        uses: tailscale/github-action@v4
+        with:
+          oauth-client-id: ${{ secrets.TS_OAUTH_CLIENT_ID }}
+          audience: ${{ secrets.TS_AUDIENCE }}
+          tags: tag:ci
+          version: latest
+
+      - name: Upload and update repository
+        env:
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
+          SSH_KEY: ${{ secrets.SSH_KEY }}
+          REMOTE_DIR: ${{ secrets.REMOTE_DIR }}
+        run: |
+          mkdir -p ~/.ssh
+          echo "$SSH_KEY" > ~/.ssh/id_ed25519
+          chmod 600 ~/.ssh/id_ed25519
+          ssh-keyscan -H "$SSH_HOST" >> ~/.ssh/known_hosts
+          ./scripts/update-repo.sh "$SSH_USER@$SSH_HOST" "$REMOTE_DIR"
+
+      - name: Commit VELBUILD
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add packages/koreader/VELBUILD
+          if git diff --cached --quiet; then
+            echo "VELBUILD unchanged"
+          else
+            git commit -m "koreader: update to nightly ${{ needs.check.outputs.nightly }}"
+            git push origin HEAD:${{ github.ref_name }}
+          fi

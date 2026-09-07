@@ -1,0 +1,59 @@
+maintainer="Noa Himesaka <himesaka@noa.codes>"
+pkgname=koreader
+# _nightly is the KOReader nightly directory name, e.g. v2026.07.2-50-g7b0938bd8_2026-09-06
+# Both _nightly and pkgver are rewritten by scripts/bump-velbuild.sh; do not edit by hand.
+_nightly=
+pkgver=0
+pkgrel=0
+upstream_author="koreader"
+category="apps"
+pkgdesc="KOReader nightly build - an ebook reader supporting PDF, DjVu, EPUB, FB2 and many more formats."
+url="https://github.com/koreader/koreader"
+arch="aarch64 armv7"
+license="AGPL-3.0"
+depends="appload>=0.4.2"
+_basetag="${_nightly%%-*}"
+_commit="${_nightly#*-g}"
+_commit="${_commit%%_*}"
+readmeurl="https://raw.githubusercontent.com/$upstream_author/koreader/$_basetag/README.md"
+changelogurl="https://github.com/$upstream_author/koreader/compare/$_basetag...$_commit"
+
+source="
+https://build.koreader.rocks/download/nightly/$_nightly/koreader-remarkable-aarch64-$_nightly.zip
+https://build.koreader.rocks/download/nightly/$_nightly/koreader-remarkable-$_nightly.zip
+COPYING-$_basetag::https://raw.githubusercontent.com/$upstream_author/koreader/$_basetag/COPYING
+KOReader.oxide
+"
+
+unpack() {
+	case "$CARCH" in
+	aarch64) unzip -o "$srcdir"/koreader-remarkable-aarch64-$_nightly.zip -d "$srcdir" ;;
+	armv7) unzip -o "$srcdir"/koreader-remarkable-$_nightly.zip -d "$srcdir" ;;
+	esac
+}
+
+package() {
+	install -d "$pkgdir"/home/root/xovi/exthome/appload
+	install -d "$pkgdir"/home/root/.local/share/applications
+	cp -r "$srcdir"/koreader \
+		"$pkgdir"/home/root/xovi/exthome/appload
+	install -Dm644 "$startdir"/KOReader.oxide \
+		"$pkgdir"/home/root/.local/share/applications/KOReader.oxide
+
+	sed -i "s/hasOTAUpdates = yes/hasOTAUpdates = no/" \
+		"$pkgdir"/home/root/xovi/exthome/appload/koreader/frontend/device/remarkable/device.lua
+
+	install -Dm644 "$srcdir"/COPYING-$_basetag \
+		"$pkgdir"/home/root/.vellum/licenses/$pkgname/COPYING
+	echo "https://github.com/koreader/koreader/archive/$_commit.tar.gz" > \
+		"$pkgdir"/home/root/.vellum/licenses/$pkgname/SOURCES
+}
+
+postdeinstall() {
+	if [ "$VELLUM_PURGE" = "1" ]; then
+		rm -rf /home/root/xovi/exthome/appload/koreader
+	fi
+}
+
+sha512sums="
+"
