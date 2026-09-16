@@ -17,7 +17,7 @@ curl -fsSL https://mirror.funami.tech/koreader-nightly/koreader-nightly.rsa.pub 
     -o /home/root/.vellum/etc/apk/keys/koreader-nightly.rsa.pub
 echo https://mirror.funami.tech/koreader-nightly >> /home/root/.vellum/etc/apk/repositories
 vellum update
-vellum add koreader
+vellum add koreader # or `vellum upgrade` if you already have one on-device
 ```
 
 The package keeps the name `koreader`. Its version is derived from the nightly
