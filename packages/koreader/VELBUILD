@@ -3,10 +3,10 @@ pkgname=koreader
 # _nightly is the KOReader nightly name, e.g. v2026.07.2-50-g7b0938bd8_2026-09-06, and the
 # two URLs are where its reMarkable zips live (nightly server or GitLab CI artifacts).
 # All three plus pkgver are rewritten by scripts/bump-velbuild.sh; do not edit by hand.
-_nightly=v2026.07.2-194-g71b664c60_2026-09-28
-_aarch64_url="https://gitlab.com/api/v4/projects/koreader%2Fnightly-builds/jobs/16770749211/artifacts/koreader/koreader-remarkable-aarch64-v2026.07.2-194-g71b664c60_2026-09-28.zip"
-_armv7_url="https://gitlab.com/api/v4/projects/koreader%2Fnightly-builds/jobs/16770749210/artifacts/koreader/koreader-remarkable-v2026.07.2-194-g71b664c60_2026-09-28.zip"
-pkgver=2026.07.2_git20260928_p194
+_nightly=v2026.07.2-207-g20fec93bc_2026-09-29
+_aarch64_url="https://gitlab.com/api/v4/projects/koreader%2Fnightly-builds/jobs/16798054993/artifacts/koreader/koreader-remarkable-aarch64-v2026.07.2-207-g20fec93bc_2026-09-29.zip"
+_armv7_url="https://gitlab.com/api/v4/projects/koreader%2Fnightly-builds/jobs/16798054992/artifacts/koreader/koreader-remarkable-v2026.07.2-207-g20fec93bc_2026-09-29.zip"
+pkgver=2026.07.2_git20260929_p207
 pkgrel=0
 upstream_author="koreader"
 category="apps"
@@ -65,10 +65,10 @@ postdeinstall() {
 	fi
 }
 
-sha512sums='e87b49a6332062b6ecce71c0c6e54fdc1c2f3a186e8a8b380e173465abb71d3a46dcc1decc67eb8a1b6f20cfedf3c6d38a636dbf59a6af3dc46e7a498fc02066
-koreader-remarkable-aarch64-v2026.07.2-194-g71b664c60_2026-09-28.zip
-018711b7bac5a0c6c14e79ae53af0d63bcadb0b1bc93cade8753774129ccfc12a1cfed9e9b2e4a2111c1a685ac13014fdf4a4826c5f5fa8c154e1e8ee725bc8d
-koreader-remarkable-v2026.07.2-194-g71b664c60_2026-09-28.zip
+sha512sums='e82a0e5917d3fc0a1e74072189d7bf1967879a36f5f49c1f4081853c30fab8a8928a1fe2851179ecb54161e34cc6b75b4b6ab59240811ccd9fea8722e7efd79c
+koreader-remarkable-aarch64-v2026.07.2-207-g20fec93bc_2026-09-29.zip
+71d81564794cc0aa592c5ff379ba6b85c08cf07ad8c5e21030f219d769343e91272c2fe8b21a112b1c5618a1251c0f9d378f529440b507a7869af3307b094a21
+koreader-remarkable-v2026.07.2-207-g20fec93bc_2026-09-29.zip
 a0a86214ea153fb07ff35ceec0848dd1703eae22de036a825efc8394e50f65e3044832f3b49cf7e45a39edc470bdf738abc36a3a78ca7df3a6e73c14eaef94a8
 COPYING-v2026.07.2
 37e4f2bcd7d7f8ddcfb89b51e60e5ffb8a86b5d6ed38233f25d88305836c18d265bc58ddfce584175a5b3261d48e5320ea3ed8e5e471baf67af43713954de858
