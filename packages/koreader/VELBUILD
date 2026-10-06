@@ -3,10 +3,10 @@ pkgname=koreader
 # _nightly is the KOReader nightly name, e.g. v2026.07.2-50-g7b0938bd8_2026-09-06, and the
 # two URLs are where its reMarkable zips live (nightly server or GitLab CI artifacts).
 # All three plus pkgver are rewritten by scripts/bump-velbuild.sh; do not edit by hand.
-_nightly=v2026.07.2-220-g83f443ce4_2026-10-04
-_aarch64_url="https://gitlab.com/api/v4/projects/koreader%2Fnightly-builds/jobs/16929117519/artifacts/koreader/koreader-remarkable-aarch64-v2026.07.2-220-g83f443ce4_2026-10-04.zip"
-_armv7_url="https://gitlab.com/api/v4/projects/koreader%2Fnightly-builds/jobs/16929117518/artifacts/koreader/koreader-remarkable-v2026.07.2-220-g83f443ce4_2026-10-04.zip"
-pkgver=2026.07.2_git20261004_p220
+_nightly=v2026.07.2-226-g1533bf17a_2026-10-06
+_aarch64_url="https://gitlab.com/api/v4/projects/koreader%2Fnightly-builds/jobs/16958327745/artifacts/koreader/koreader-remarkable-aarch64-v2026.07.2-226-g1533bf17a_2026-10-06.zip"
+_armv7_url="https://gitlab.com/api/v4/projects/koreader%2Fnightly-builds/jobs/16958327744/artifacts/koreader/koreader-remarkable-v2026.07.2-226-g1533bf17a_2026-10-06.zip"
+pkgver=2026.07.2_git20261006_p226
 pkgrel=0
 upstream_author="koreader"
 category="apps"
@@ -65,10 +65,10 @@ postdeinstall() {
 	fi
 }
 
-sha512sums='4ef15fb11aa535ff3c777c4bbe206c67b347ab6a2f3fe410d5e8eef5b8c4b523f341b9e4a07416ddca9250a7611cef3eae58812bb7a0b38a0383e2ea25ddfd43
-koreader-remarkable-aarch64-v2026.07.2-220-g83f443ce4_2026-10-04.zip
-633341e9b4715c5e3b56a0aee1a71a64e9cb6556bb9991666521e434cb6abf02a751413e1308b7cdd960cdbadc8ff691c8c659a440f8a14998831ca5afc7d0fc
-koreader-remarkable-v2026.07.2-220-g83f443ce4_2026-10-04.zip
+sha512sums='d78c88bbea8c1764e616914db3565aadd6c80ec57473846d947a1931edfffad161c22d475c8dff079e9fcb3059c15c68331057b67cb05a221860fc95b23f184e
+koreader-remarkable-aarch64-v2026.07.2-226-g1533bf17a_2026-10-06.zip
+4f6387885bb32c0cd0ed7efd2b2e390f4257e16fcfd398462935b104abb4a3191ca12ea9bc192f7cdbb4311ecb11badf8d336a0b0582025689905ed853bb4266
+koreader-remarkable-v2026.07.2-226-g1533bf17a_2026-10-06.zip
 a0a86214ea153fb07ff35ceec0848dd1703eae22de036a825efc8394e50f65e3044832f3b49cf7e45a39edc470bdf738abc36a3a78ca7df3a6e73c14eaef94a8
 COPYING-v2026.07.2
 37e4f2bcd7d7f8ddcfb89b51e60e5ffb8a86b5d6ed38233f25d88305836c18d265bc58ddfce584175a5b3261d48e5320ea3ed8e5e471baf67af43713954de858
