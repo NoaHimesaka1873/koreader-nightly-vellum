@@ -1,5 +1,5 @@
 #!/bin/bash
-# Find the newest KOReader nightly that has both reMarkable zips and compare it
+# Find the newest KOReader nightly that has both reMarkable archives and compare it
 # with the nightly currently recorded in packages/koreader/VELBUILD.
 #
 # Sources, in order:
@@ -8,9 +8,10 @@
 #      whenever the nightly server does not answer.
 #
 # Usage: ./scripts/check-nightly.sh [listing-html-file]
-#   NIGHTLY=<dir name>   pin a nightly-server directory, e.g. v2026.07.2-50-g7b0938bd8_2026-09-06
-#   PIPELINE=<id>        pin a GitLab pipeline id instead of the newest successful one
-#   listing-html-file    parse this saved nightly-server listing (offline testing)
+#   NIGHTLY=<dir name>   pin a nightly-server directory, e.g. 2026.07.2-351-g1294bb3
+#   PIPELINE=<id>        pin a GitLab pipeline id instead of the newest one with reMarkable builds
+#   listing-html-file    parse this saved nightly-server listing instead of fetching it
+#                        (the per-nightly directories are still fetched)
 #
 # Prints KEY=VALUE lines: current, latest, pkgver, update, origin, aarch64_url, armv7_url.
 set -euo pipefail
@@ -24,28 +25,68 @@ VELBUILD="$(dirname "$SCRIPT_DIR")/packages/koreader/VELBUILD"
 current=$(sed -n 's/^_nightly=//p' "$VELBUILD")
 latest="" aarch64_url="" armv7_url="" origin=""
 
-emit() {
-    # v2026.07.2-50-g7b0938bd8_2026-09-06 -> 2026.07.2_git20260906_p50
+# v2026.07.2-50-g7b0938bd8_2026-09-06 -> 2026.07.2_git20260906_p50
+pkgver_of() {
     local base count date
-    base="${latest#v}"; base="${base%%-*}"
-    count="${latest#*-}"; count="${count%%-*}"
-    date="${latest##*_}"; date="${date//-/}"
+    base="${1#v}"; base="${base%%-*}"
+    count="${1#*-}"; count="${count%%-*}"
+    date="${1##*_}"; date="${date//-/}"
+    echo "${base}_git${date}_p${count}"
+}
+
+# Compare package versions, not names: the nightly server abbreviates the
+# commit hash to 7 characters and GitLab to 9, so the same nightly carries a
+# different name depending on where it came from. A pinned nightly or pipeline
+# updates whenever it differs; otherwise only a newer nightly does, because the
+# two sources are not always in sync (GitLab can be a day behind) and a fallback
+# must never republish an older nightly over a newer one.
+emit() {
+    local pkgver cur update=false
+    pkgver=$(pkgver_of "$latest")
+    cur=$(pkgver_of "$current")
+    if [ "$pkgver" != "$cur" ]; then
+        if [ -n "${NIGHTLY:-}${PIPELINE:-}" ] \
+            || [ "$(printf '%s\n%s\n' "$cur" "$pkgver" | sort -V | tail -1)" = "$pkgver" ]; then
+            update=true
+        else
+            echo "Not updating: $latest is older than $current" >&2
+        fi
+    fi
     echo "current=$current"
     echo "latest=$latest"
-    echo "pkgver=${base}_git${date}_p${count}"
-    if [ "$latest" != "$current" ]; then echo "update=true"; else echo "update=false"; fi
+    echo "pkgver=$pkgver"
+    echo "update=$update"
     echo "origin=$origin"
     echo "aarch64_url=$aarch64_url"
     echo "armv7_url=$armv7_url"
 }
 
-server_urls() {
-    aarch64_url="$NIGHTLY_BASE/$1/koreader-remarkable-aarch64-$1.zip"
-    armv7_url="$NIGHTLY_BASE/$1/koreader-remarkable-$1.zip"
+# Look inside one nightly-server directory (e.g. 2026.07.2-351-g1294bb3/) for
+# both reMarkable archives. The version with the build date is only in the file
+# names: koreader-remarkable[-aarch64]-v2026.07.2-351-g1294bb3_2026-11-21.tar.xz.
+# Older directories carried .zip files instead.
+server_dir() {
+    local dir="$1" listing file64 ver ext
+    listing=$(curl -fsSL --retry 2 --max-time 60 "$NIGHTLY_BASE/$dir/") || return 1
+    for ext in tar.xz zip; do
+        file64=$(grep -oE "href=\"koreader-remarkable-aarch64-v[^\"/]*\.${ext//./\\.}\"" <<<"$listing" \
+            | sed -E 's/^href="//; s/"$//' | head -1 || true)
+        [ -n "$file64" ] || continue
+        ver="${file64#koreader-remarkable-aarch64-}"; ver="${ver%."$ext"}"
+        if grep -qF "href=\"koreader-remarkable-$ver.$ext\"" <<<"$listing"; then
+            latest="$ver"
+            aarch64_url="$NIGHTLY_BASE/$dir/$file64"
+            armv7_url="$NIGHTLY_BASE/$dir/koreader-remarkable-$ver.$ext"
+            origin="nightly-server"
+            return 0
+        fi
+    done
+    return 1
 }
 
-# Newest nightly-server directory whose two reMarkable zips both exist.
-# Directory names look like v2026.07.2-50-g7b0938bd8_2026-09-06/.
+# Newest nightly-server directory with both reMarkable archives. Directory
+# names look like 2026.07.2-351-g1294bb3/ (before the August 2026 outage they were
+# v2026.07.2-50-g7b0938bd8_2026-09-06/).
 from_server() {
     local listing candidates cand
     if [ -n "${1:-}" ]; then
@@ -54,35 +95,30 @@ from_server() {
         listing=$(curl -fsSL --max-time 60 "$NIGHTLY_BASE/") || return 1
     fi
     candidates=$(echo "$listing" \
-        | grep -oE 'href="v[0-9]+\.[0-9]+(\.[0-9]+)?-[0-9]+-g[0-9a-f]+_[0-9]{4}-[0-9]{2}-[0-9]{2}/"' \
+        | grep -oE 'href="v?[0-9]+\.[0-9]+(\.[0-9]+)?-[0-9]+-g[0-9a-f]+(_[0-9]{4}-[0-9]{2}-[0-9]{2})?/"' \
         | sed -E 's/^href="//; s#/"$##' \
         | sort -u \
-        | sed -E 's/^(v[^-]+-([0-9]+)-g[0-9a-f]+_([0-9-]+))$/\3\t\2\t\1/' \
-        | sort -k1,1r -k2,2nr \
-        | cut -f3)
+        | sed -E 's/^(v?)(.*)$/\2\t\1\2/' \
+        | sort -t "$(printf '\t')" -k1,1Vr \
+        | cut -f2)
     [ -n "$candidates" ] || return 1
     for cand in $candidates; do
-        if [ -n "${1:-}" ] \
-            || { curl -fsSIL --retry 2 "$NIGHTLY_BASE/$cand/koreader-remarkable-aarch64-$cand.zip" >/dev/null \
-                 && curl -fsSIL --retry 2 "$NIGHTLY_BASE/$cand/koreader-remarkable-$cand.zip" >/dev/null; }; then
-            latest="$cand"
-            server_urls "$cand"
-            origin="nightly-server"
-            return 0
-        fi
-        echo "Skipping $cand: reMarkable zips not (yet) available" >&2
+        server_dir "$cand" && return 0
+        echo "Skipping $cand: reMarkable archives not (yet) available" >&2
     done
     return 1
 }
 
-# Newest successful GitLab pipeline whose build_remarkable and
-# build_remarkable_aarch64 jobs both still have their artifacts.
+# Newest GitLab pipeline whose build_remarkable and build_remarkable_aarch64
+# jobs both succeeded and still have their artifacts. The pipeline itself is
+# not required to pass: since late October 2026 its Android jobs fail every
+# day, which marks the whole pipeline failed while the reMarkable builds are fine.
 from_gitlab() {
     local pipelines pid jobs job64 job32 file64 file32 ver
     if [ -n "${1:-}" ]; then
         pipelines="$1"
     else
-        pipelines=$(curl -fsSL --retry 3 "$GITLAB_API/pipelines?ref=master&status=success&per_page=10" | jq -r '.[].id')
+        pipelines=$(curl -fsSL --retry 3 "$GITLAB_API/pipelines?ref=master&per_page=10" | jq -r '.[].id')
     fi
     for pid in $pipelines; do
         jobs=$(curl -fsSL --retry 3 "$GITLAB_API/pipelines/$pid/jobs?per_page=100")
@@ -114,7 +150,7 @@ from_gitlab() {
 }
 
 if [ -n "${NIGHTLY:-}" ]; then
-    latest="$NIGHTLY"; server_urls "$NIGHTLY"; origin="nightly-server"
+    server_dir "${NIGHTLY%/}" || { echo "No reMarkable archives in nightly-server directory $NIGHTLY" >&2; exit 1; }
 elif [ -n "${PIPELINE:-}" ]; then
     from_gitlab "$PIPELINE" || { echo "Pipeline $PIPELINE has no usable reMarkable artifacts" >&2; exit 1; }
 elif [ -n "${1:-}" ]; then

@@ -38,24 +38,30 @@ vellum add koreader
 ## How it works
 
 `packages/koreader/VELBUILD` is the Vellum `koreader` package with the
-reMarkable zips fetched from wherever the nightly was published. The nightly it
-tracks is stored in `_nightly`, the two zip locations in `_aarch64_url` and
-`_armv7_url`; `pkgver` and `sha512sums` are derived from them.
+reMarkable archives fetched from wherever the nightly was published. The nightly
+it tracks is stored in `_nightly`, the two archive locations in `_aarch64_url`
+and `_armv7_url`; `pkgver` and `sha512sums` are derived from them.
 
 Nightlies come from two places. The official server at
-build.koreader.rocks is used when it answers. When it does not (it has been
-down since August 2026, see
+build.koreader.rocks is used when it answers; it serves `.tar.xz` archives in
+directories like `2026.07.2-351-g1294bb3/`. When it does not (it was down for
+months from August 2026, see
 [koreader/koreader#15902](https://github.com/koreader/koreader/issues/15902)),
-the artifacts of the daily
+the `.zip` artifacts of the daily
 [koreader/nightly-builds](https://gitlab.com/koreader/nightly-builds) GitLab
-pipeline are used instead. Both carry the same version string, so switching
-between them never produces a duplicate package.
+pipeline are used instead, as long as its two reMarkable jobs passed (the
+pipeline as a whole often fails on Android). The server abbreviates the commit
+hash to 7 characters and GitLab to 9, so the check compares `pkgver`, not the
+nightly name, and switching sources never rebuilds the same nightly. A
+scheduled run only ever moves to a newer nightly, since GitLab can lag the
+server by a day; a pinned `nightly` or `pipeline` may go back.
 
 `.github/workflows/nightly.yml` runs at 07:30 UTC daily, after the GitLab
 schedule, and on manual dispatch:
 
-1. **check**: finds the newest nightly that has both reMarkable zips on
-   whichever source is available and compares it with `_nightly`. On a change
+1. **check**: finds the newest nightly that has both reMarkable archives
+   on whichever source is available and compares its `pkgver` with the
+   VELBUILD's. On a change
    it rewrites the VELBUILD, refreshes the checksums, and hands the file to the
    next jobs as an artifact.
 2. **build**: builds each architecture with
@@ -67,7 +73,7 @@ schedule, and on manual dispatch:
    VELBUILD to `main`.
 
 Dispatch inputs: `force` publishes even if nothing changed, `nightly` pins a
-nightly-server directory such as `v2026.07.2-50-g7b0938bd8_2026-09-06`, and
+nightly-server directory such as `2026.07.2-351-g1294bb3`, and
 `pipeline` pins a GitLab pipeline id.
 
 ### Secrets
@@ -86,8 +92,8 @@ Requires `vbuild` and Docker or Podman. Put the private key at
 otherwise a throwaway key is generated.
 
 ```sh
-./scripts/check-nightly.sh                                   # newest nightly vs. VELBUILD, with zip URLs
-./scripts/bump-velbuild.sh <nightly> <aarch64-zip-url> <armv7-zip-url>
+./scripts/check-nightly.sh                                   # newest nightly vs. VELBUILD, with archive URLs
+./scripts/bump-velbuild.sh <nightly> <aarch64-url> <armv7-url>
 ./scripts/build-package.sh aarch64                           # writes dist/aarch64/
 ./scripts/update-repo.sh user@host /opt/mirrorwww/koreader-nightly
 ```

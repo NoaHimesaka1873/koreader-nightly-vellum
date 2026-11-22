@@ -1,7 +1,8 @@
 maintainer="Noa Himesaka <himesaka@noa.codes>"
 pkgname=koreader
-# _nightly is the KOReader nightly name, e.g. v2026.07.2-50-g7b0938bd8_2026-09-06, and the
-# two URLs are where its reMarkable zips live (nightly server or GitLab CI artifacts).
+# _nightly is the KOReader nightly name, e.g. v2026.07.2-351-g1294bb3_2026-11-21, and the
+# two URLs are where its reMarkable archives live: .tar.xz on the nightly server,
+# .zip in GitLab CI artifacts.
 # All three plus pkgver are rewritten by scripts/bump-velbuild.sh; do not edit by hand.
 _nightly=v2026.07.2-293-gc8eb592a8_2026-10-27
 _aarch64_url="https://gitlab.com/api/v4/projects/koreader%2Fnightly-builds/jobs/17528306008/artifacts/koreader/koreader-remarkable-aarch64-v2026.07.2-293-gc8eb592a8_2026-10-27.zip"
@@ -19,20 +20,31 @@ options="!check"
 _basetag="${_nightly%%-*}"
 _commit="${_nightly#*-g}"
 _commit="${_commit%%_*}"
+_aarch64_file="${_aarch64_url##*/}"
+_armv7_file="${_armv7_url##*/}"
 readmeurl="https://raw.githubusercontent.com/$upstream_author/koreader/$_basetag/README.md"
 changelogurl="https://github.com/$upstream_author/koreader/compare/$_basetag...$_commit"
 
 source="
-koreader-remarkable-aarch64-$_nightly.zip::$_aarch64_url
-koreader-remarkable-$_nightly.zip::$_armv7_url
+$_aarch64_file::$_aarch64_url
+$_armv7_file::$_armv7_url
 COPYING-$_basetag::https://raw.githubusercontent.com/$upstream_author/koreader/$_basetag/COPYING
 KOReader.oxide
 "
 
+# Only the archive for $CARCH is unpacked. The builder image has busybox unxz
+# but no xz binary for tar -J, and abuild runs with -d, so makedepends cannot
+# pull one in.
 unpack() {
+	local archive
 	case "$CARCH" in
-	aarch64) unzip -o "$srcdir"/koreader-remarkable-aarch64-$_nightly.zip -d "$srcdir" ;;
-	armv7) unzip -o "$srcdir"/koreader-remarkable-$_nightly.zip -d "$srcdir" ;;
+	aarch64) archive="$srcdir/$_aarch64_file" ;;
+	armv7) archive="$srcdir/$_armv7_file" ;;
+	esac
+	case "$archive" in
+	*.zip) unzip -o "$archive" -d "$srcdir" ;;
+	*.tar.xz) unxz -c "$archive" | tar -xf - -C "$srcdir" ;;
+	*) echo "unknown archive type: $archive" >&2; return 1 ;;
 	esac
 }
 

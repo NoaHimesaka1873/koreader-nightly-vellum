@@ -1,14 +1,14 @@
 #!/bin/bash
 # Point packages/koreader/VELBUILD at a nightly and refresh its checksums.
 #
-# Usage: ./scripts/bump-velbuild.sh <nightly> <aarch64-zip-url> <armv7-zip-url>
-#   e.g. ./scripts/bump-velbuild.sh v2026.07.2-50-g7b0938bd8_2026-09-06 \
-#            https://build.koreader.rocks/download/nightly/v2026.07.2-50-g7b0938bd8_2026-09-06/koreader-remarkable-aarch64-v2026.07.2-50-g7b0938bd8_2026-09-06.zip \
-#            https://build.koreader.rocks/download/nightly/v2026.07.2-50-g7b0938bd8_2026-09-06/koreader-remarkable-v2026.07.2-50-g7b0938bd8_2026-09-06.zip
+# Usage: ./scripts/bump-velbuild.sh <nightly> <aarch64-url> <armv7-url>
+#   e.g. ./scripts/bump-velbuild.sh v2026.07.2-351-g1294bb3_2026-11-21 \
+#            https://build.koreader.rocks/download/nightly/2026.07.2-351-g1294bb3/koreader-remarkable-aarch64-v2026.07.2-351-g1294bb3_2026-11-21.tar.xz \
+#            https://build.koreader.rocks/download/nightly/2026.07.2-351-g1294bb3/koreader-remarkable-v2026.07.2-351-g1294bb3_2026-11-21.tar.xz
 #   The URLs are what scripts/check-nightly.sh prints as aarch64_url and armv7_url.
 set -euo pipefail
 
-usage="usage: $0 <nightly> <aarch64-zip-url> <armv7-zip-url>"
+usage="usage: $0 <nightly> <aarch64-url> <armv7-url>"
 nightly="${1:?$usage}"
 aarch64_url="${2:?$usage}"
 armv7_url="${3:?$usage}"

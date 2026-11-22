@@ -10,7 +10,7 @@ on:
         type: boolean
         default: false
       nightly:
-        description: "Pin a nightly-server directory name (e.g. v2026.07.2-50-g7b0938bd8_2026-09-06) instead of the newest"
+        description: "Pin a nightly-server directory name (e.g. 2026.07.2-351-g1294bb3) instead of the newest"
         type: string
         default: ""
       pipeline:
