@@ -4,10 +4,10 @@ pkgname=koreader
 # two URLs are where its reMarkable archives live: .tar.xz on the nightly server,
 # .zip in GitLab CI artifacts.
 # All three plus pkgver are rewritten by scripts/bump-velbuild.sh; do not edit by hand.
-_nightly=v2026.07.2-354-g6aa4649_2026-11-25
-_aarch64_url="https://build.koreader.rocks/download/nightly/2026.07.2-354-g6aa4649/koreader-remarkable-aarch64-v2026.07.2-354-g6aa4649_2026-11-25.tar.xz"
-_armv7_url="https://build.koreader.rocks/download/nightly/2026.07.2-354-g6aa4649/koreader-remarkable-v2026.07.2-354-g6aa4649_2026-11-25.tar.xz"
-pkgver=2026.07.2_git20261125_p354
+_nightly=v2026.07.2-359-gb32d91a_2026-11-26
+_aarch64_url="https://build.koreader.rocks/download/nightly/2026.07.2-359-gb32d91a/koreader-remarkable-aarch64-v2026.07.2-359-gb32d91a_2026-11-26.tar.xz"
+_armv7_url="https://build.koreader.rocks/download/nightly/2026.07.2-359-gb32d91a/koreader-remarkable-v2026.07.2-359-gb32d91a_2026-11-26.tar.xz"
+pkgver=2026.07.2_git20261126_p359
 pkgrel=0
 upstream_author="koreader"
 category="apps"
@@ -77,10 +77,10 @@ postdeinstall() {
 	fi
 }
 
-sha512sums='176bc8b6b01be292a87ccfe004dff5787ee6b6c0452db31ca44875195861da0ddcb86f1b9b105d7f0ef02f3a5f90edaa9a9bc7e83a2d31ede83814e9ed9cb169
-koreader-remarkable-aarch64-v2026.07.2-354-g6aa4649_2026-11-25.tar.xz
-7fe20f9d212311305b943764cac93a40c4421d51db48822af3be0dede4f700a77622f07766828555f2967acdca7d31c998b1158e75894b3de0dfcf333aee5e11
-koreader-remarkable-v2026.07.2-354-g6aa4649_2026-11-25.tar.xz
+sha512sums='5357fc820af8d35aa3c630a9fefbd72929828ab564ccee319f0b34d5ddde67211e29d2211cc078f7e213e9415dffc3d2d8761c9f39eb3db5a4da6a6dbab461f7
+koreader-remarkable-aarch64-v2026.07.2-359-gb32d91a_2026-11-26.tar.xz
+5a2d95202c4e45b4e31d388c3e341c0630f944e3ea2e185e1ee625644e8ece54806d82b5d771ec0f602da24c969971507d152fe1f4e2db2f6d6dfb081bf9c718
+koreader-remarkable-v2026.07.2-359-gb32d91a_2026-11-26.tar.xz
 a0a86214ea153fb07ff35ceec0848dd1703eae22de036a825efc8394e50f65e3044832f3b49cf7e45a39edc470bdf738abc36a3a78ca7df3a6e73c14eaef94a8
 COPYING-v2026.07.2
 37e4f2bcd7d7f8ddcfb89b51e60e5ffb8a86b5d6ed38233f25d88305836c18d265bc58ddfce584175a5b3261d48e5320ea3ed8e5e471baf67af43713954de858
